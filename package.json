@@ -9,7 +9,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
-    "buildmap": "node --loader ts-node/esm buildmap.ts"
+    "buildmap": "vite-node buildmap.ts"
   },
   "dependencies": {
     "axios": "^1.6.4",
@@ -35,9 +35,9 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.2.2",
+    "typescript": "^5.3.3",
     "vite": "^5.0.8",
+    "vite-node": "^1.1.3",
     "vitest": "^1.1.3"
   }
 }

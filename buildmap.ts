@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env vite-node --script
 
 import axios from "axios";
 import * as fs from "fs";
@@ -33,6 +33,7 @@ const fetchData = async () => {
   const vocab = new Map<string, number>();
 
   while (nextUrl) {
+    console.log("Reading from ", nextUrl);
     const response = await axios.get(nextUrl, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -43,6 +44,8 @@ const fetchData = async () => {
     nextUrl = response.data.pages.next_url;
     await sleep(1000); // be kind to the server
   }
+  //const json = JSON.stringify(Array.from(vocab.entries()));
+  //fs.writeFileSync("vocab.json", json);
   return vocab;
 };
 
@@ -92,10 +95,13 @@ const buildTranslations = (
 
 export const buildMap = async () => {
   const dictionary = readDictionaryFile("wadokudict2");
-  const vocab = await fetchData();
+  //const vocab = await fetchData();
+  const vocab = new Map<string, number>(
+    JSON.parse(fs.readFileSync("vocab.json", "utf8"))
+  );
   const { translations, untranslated } = buildTranslations(dictionary, vocab);
 
-  const translationsJSON = JSON.stringify(translations);
+  const translationsJSON = JSON.stringify(Array.from(translations.entries()));
   fs.writeFileSync("translations.json", translationsJSON);
 
   const untranslatedJSON = JSON.stringify(untranslated);
@@ -104,4 +110,5 @@ export const buildMap = async () => {
 
 if (token) {
   buildMap();
+  //console.log(readDictionaryFile("wadokudict2"));
 }

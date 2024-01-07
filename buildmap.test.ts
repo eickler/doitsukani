@@ -11,7 +11,6 @@ describe("processEntries", () => {
 
     processVocab(entries, result);
 
-    console.log(result);
     expect(result.size).toEqual(1);
     expect(result.get("一")).toEqual(1);
   });
