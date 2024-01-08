@@ -1,34 +1,38 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./vite.svg";
+import logo from "./assets/doitsukani.png";
 import "./App.css";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { Progress } from "./components/ui/progress";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [apiToken, setApiToken] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleUpload = () => {};
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="container mx-auto flex flex-col">
+      <img src={logo} className="logo w-24 h24 mx-auto" alt="Doitsukani logo" />
+      <h1 className="text-3xl">Doitsukani</h1>
+      <Input
+        type="text"
+        placeholder="Enter Wanikani API token"
+        value={apiToken}
+        onChange={(e) => setApiToken(e.target.value)}
+        className="w-64 mt-10 mx-auto"
+      />
+      <Button
+        className="mt-4 mx-auto"
+        onClick={handleUpload}
+        disabled={uploading}
+      >
+        {uploading ? "Uploading..." : "Upload Translations"}
+      </Button>
+      {uploading && <Progress className="mt-4" />}
+      {error && <p className="mt-4">{error}</p>}
+    </div>
   );
 }
 

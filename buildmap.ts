@@ -150,7 +150,7 @@ export const buildMap = async () => {
   const { translations, untranslated } = buildTranslations(dictionary, vocab);
 
   const translationsJSON = JSON.stringify(Array.from(translations.entries()));
-  fs.writeFileSync("translations.json", translationsJSON);
+  fs.writeFileSync("dist/translations.json", translationsJSON);
 
   const untranslatedJSON = JSON.stringify(untranslated);
   fs.writeFileSync("misses.json", untranslatedJSON);
