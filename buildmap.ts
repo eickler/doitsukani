@@ -44,8 +44,10 @@ const fetchData = async () => {
     nextUrl = response.data.pages.next_url;
     await sleep(1000); // be kind to the server
   }
-  //const json = JSON.stringify(Array.from(vocab.entries()));
-  //fs.writeFileSync("vocab.json", json);
+
+  // Update the offline data
+  const json = JSON.stringify(Array.from(vocab.entries()));
+  fs.writeFileSync("vocab.json", json);
   return vocab;
 };
 
@@ -121,6 +123,8 @@ const buildTranslations = (
   const untranslated: string[] = [];
 
   vocab.forEach((id, word) => {
+    // Wadoku uses an ellipsis character instead of a tilde.
+    word = word.replace(/〜/, "…");
     const meanings = dictionary.get(word);
     if (meanings) {
       translations.set(id, meanings);
@@ -134,10 +138,15 @@ const buildTranslations = (
 
 export const buildMap = async () => {
   const dictionary = readDictionaryFile("wadokudict2");
-  //const vocab = await fetchData();
-  const vocab = new Map<string, number>(
-    JSON.parse(fs.readFileSync("vocab.json", "utf8"))
-  );
+  let vocab = new Map<string, number>();
+  if (token) {
+    vocab = await fetchData();
+  } else {
+    // Use offline data
+    vocab = new Map<string, number>(
+      JSON.parse(fs.readFileSync("vocab.json", "utf8"))
+    );
+  }
   const { translations, untranslated } = buildTranslations(dictionary, vocab);
 
   const translationsJSON = JSON.stringify(Array.from(translations.entries()));
@@ -147,7 +156,7 @@ export const buildMap = async () => {
   fs.writeFileSync("misses.json", untranslatedJSON);
 };
 
-if (token) {
+if (process.argv.length > 2) {
+  console.log("Creating translations...");
   buildMap();
-  //console.log(readDictionaryFile("wadokudict2"));
 }

@@ -1,30 +1,19 @@
-# React + TypeScript + Vite
+# ドイツ蟹　 Doitsukani
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A little tool to add German translations to the vocabulary of the [Wanikani](https://wanikani.com) Japanese training app. It is based on EDICT2 files from the [Wadoku project](https://www.wadoku.de/wiki/display/WAD/Downloads+und+Links).
 
-Currently, two official plugins are available:
+## How can I use it?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Log in to your Wanikani account and create an API token: [https://www.wanikani.com/settings/personal_access_tokens].
+- Copy the token and paste it into [https://eickler.github.io/doitsukani/].
+- Click "Add translations" to add German translations, or "Remove translations" to remove them.
+- Wait ...
 
-## Expanding the ESLint configuration
+Do not close the browser while the translations are added. The application just runs in your browser and does not run or store anything elsehwere. Hence, when you close the browser while the upload is still running, you will simply have not all translations uploaded. The process may take several minutes. (I deliberately made it a bit slower to not overload the Wanikani server.)
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+After everything completed, you should see German translations as "user synonyms" in your Wanikani app.
 
-- Configure the top-level `parserOptions` property like this:
+Limitations:
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+- There are about 100 vocabulary items that do not have a counterpart in Wadoku.
+- Wadoku has a LOT of alternative translations for many words. To not add tens of synonyms, I am using a small heuristic to add up to three translations as they are. Any remaining translations are added as a potentially long single user synonym.
