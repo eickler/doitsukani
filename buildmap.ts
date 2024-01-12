@@ -1,54 +1,23 @@
 #!/usr/bin/env vite-node --script
 
-import axios from "axios";
 import * as fs from "fs";
+import { getVocabulary } from "./src/lib/wanikani";
 
 const token = process.env.API_TOKEN;
 
-const sleep = (milliseconds: number) => {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-};
-
-export interface VocabularyEntry {
-  object: string;
-  data: {
-    characters: string;
-  };
-  id: number;
-}
-
-export const processVocab = (
-  entries: VocabularyEntry[],
-  vocab: Map<string, number>
-) => {
-  entries.forEach((element) => {
-    if (element.object === "vocabulary") {
-      vocab.set(element.data.characters, element.id);
+const fetchData = async (token: string) => {
+  const vocabulary = await getVocabulary(token);
+  const vocabIdMap = new Map<string, number>();
+  vocabulary.forEach((vocab) => {
+    if (vocab.object === "vocabulary") {
+      vocabIdMap.set(vocab.data.characters, vocab.id);
     }
   });
-};
-
-const fetchData = async () => {
-  let nextUrl = "https://api.wanikani.com/v2/subjects";
-  const vocab = new Map<string, number>();
-
-  while (nextUrl) {
-    console.log("Reading from ", nextUrl);
-    const response = await axios.get(nextUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    processVocab(response.data.data, vocab);
-    nextUrl = response.data.pages.next_url;
-    await sleep(1000); // be kind to the server
-  }
 
   // Update the offline data
-  const json = JSON.stringify(Array.from(vocab.entries()));
+  const json = JSON.stringify(Array.from(vocabIdMap.entries()));
   fs.writeFileSync("vocab.json", json);
-  return vocab;
+  return vocabIdMap;
 };
 
 export const parse = (line: string, dictionary: Map<string, string[]>) => {
@@ -140,7 +109,7 @@ export const buildMap = async () => {
   const dictionary = readDictionaryFile("wadokudict2");
   let vocab = new Map<string, number>();
   if (token) {
-    vocab = await fetchData();
+    vocab = await fetchData(token);
   } else {
     // Use offline data
     vocab = new Map<string, number>(
@@ -150,7 +119,7 @@ export const buildMap = async () => {
   const { translations, untranslated } = buildTranslations(dictionary, vocab);
 
   const translationsJSON = JSON.stringify(Array.from(translations.entries()));
-  fs.writeFileSync("dist/translations.json", translationsJSON);
+  fs.writeFileSync("src/translations.json", translationsJSON);
 
   const untranslatedJSON = JSON.stringify(untranslated);
   fs.writeFileSync("misses.json", untranslatedJSON);

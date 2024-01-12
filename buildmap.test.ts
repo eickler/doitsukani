@@ -1,33 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { processVocab, parse } from "./buildmap";
-
-describe("processEntries", () => {
-  it("should filter out non-vocabulary entries", () => {
-    const result = new Map<string, number>();
-    const entries = [
-      { object: "vocabulary", id: 1, data: { characters: "一" } },
-      { object: "kanji", id: 3, data: { characters: "三" } },
-    ];
-
-    processVocab(entries, result);
-
-    expect(result.size).toEqual(1);
-    expect(result.get("一")).toEqual(1);
-  });
-
-  it("should map the entries to the expected format", () => {
-    const result = new Map<string, number>();
-    const entries = [
-      { object: "vocabulary", id: 1, data: { characters: "一" } },
-      { object: "vocabulary", id: 2, data: { characters: "二" } },
-    ];
-    processVocab(entries, result);
-
-    expect(result.size).toEqual(2);
-    expect(result.get("一")).toEqual(1);
-    expect(result.get("二")).toEqual(2);
-  });
-});
+import { parse } from "./buildmap";
 
 describe("parse", () => {
   it("should parse a standard edict2 line", () => {

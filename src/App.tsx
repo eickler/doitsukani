@@ -1,9 +1,11 @@
+import translations from "./translations.json";
 import { useState } from "react";
 import logo from "./assets/doitsukani.png";
 import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Progress } from "./components/ui/progress";
+
 import {
   Tooltip,
   TooltipContent,
@@ -16,7 +18,63 @@ function App() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleUpload = () => {};
+  /* Move all logic elsehwere! */
+  const handleUpload = () => {q
+    setUploading(true);
+    setError("");
+
+    /*
+        const fetchUploadedTranslations = async () => {
+      try {
+        const response = await fetch("https://api.wanikani.com/v2/study_materials", {
+          headers: {
+            Authorization: `Bearer ${apiToken}`,
+          },
+        });
+        const data = await response.json();
+        const studyMaterials = data.data;
+        const uploadedTranslations = studyMaterials.map((studyMaterial) => studyMaterial.data.meaning_synonyms);
+        setUploadedTranslations(uploadedTranslations);
+      } catch (error) {
+        setError("Failed to fetch uploaded translations. Please check your API token.");
+      }
+    };
+    */
+
+    const uploadPromises = translations.map(([subjectId, meaningSynonyms]) => {
+      const data = {
+        study_material: {
+          subject_id: subjectId,
+          meaning_synonyms: meaningSynonyms,
+        },
+      };
+
+      return fetch("https://api.wanikani.com/v2/study_materials", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    });
+
+    Promise.all(uploadPromises)
+      .then((responses) => {
+        setUploading(false);
+        const errorResponses = responses.filter((response) => !response.ok);
+        if (errorResponses.length > 0) {
+          setError(
+            "Something went wrong. Please check your API token. " +
+              errorResponses
+          );
+        }
+      })
+      .catch((error) => {
+        setUploading(false);
+        setError("Something went wrong. Please check your API token. " + error);
+      });
+  };
 
   return (
     <TooltipProvider>

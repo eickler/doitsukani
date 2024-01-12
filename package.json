@@ -12,10 +12,12 @@
     "buildmap": "vite-node buildmap.ts run"
   },
   "dependencies": {
+    "@bachmacintosh/wanikani-api-types": "^1.5.0",
     "@radix-ui/react-progress": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tooltip": "^1.0.7",
     "axios": "^1.6.4",
+    "bottleneck": "^2.19.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.306.0",
