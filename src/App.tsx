@@ -1,4 +1,4 @@
-import translations from "./translations.json";
+import translationsJson from "./translations.json";
 import { useState } from "react";
 import logo from "./assets/doitsukani.png";
 import "./App.css";
@@ -12,68 +12,39 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./components/ui/tooltip";
+import {
+  ProgressReporter,
+  getUnburnedVocabulary,
+  writeStudyMaterials,
+} from "./lib/wanikani";
+
+type Translations = {
+  [key: string]: string[];
+};
+const translations: Translations = translationsJson;
 
 function App() {
   const [apiToken, setApiToken] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [maxSteps, setMaxSteps] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  // State for Progress component
 
-  /* Move all logic elsehwere! */
-  const handleUpload = () => {q
+  const progressReporter: ProgressReporter = {
+    setMaxSteps: (max: number) => setMaxSteps(max),
+    nextStep: () => setCurrentStep(currentStep + 1),
+  };
+
+  const handleUpload = async () => {
     setUploading(true);
     setError("");
 
-    /*
-        const fetchUploadedTranslations = async () => {
-      try {
-        const response = await fetch("https://api.wanikani.com/v2/study_materials", {
-          headers: {
-            Authorization: `Bearer ${apiToken}`,
-          },
-        });
-        const data = await response.json();
-        const studyMaterials = data.data;
-        const uploadedTranslations = studyMaterials.map((studyMaterial) => studyMaterial.data.meaning_synonyms);
-        setUploadedTranslations(uploadedTranslations);
-      } catch (error) {
-        setError("Failed to fetch uploaded translations. Please check your API token.");
-      }
-    };
-    */
-
-    const uploadPromises = translations.map(([subjectId, meaningSynonyms]) => {
-      const data = {
-        study_material: {
-          subject_id: subjectId,
-          meaning_synonyms: meaningSynonyms,
-        },
-      };
-
-      return fetch("https://api.wanikani.com/v2/study_materials", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+    const vocab = await getUnburnedVocabulary(apiToken);
+    const studyMaterials = vocab.map((v) => {
+      return { subject: v.id, synonyms: translations[v.id] };
     });
-
-    Promise.all(uploadPromises)
-      .then((responses) => {
-        setUploading(false);
-        const errorResponses = responses.filter((response) => !response.ok);
-        if (errorResponses.length > 0) {
-          setError(
-            "Something went wrong. Please check your API token. " +
-              errorResponses
-          );
-        }
-      })
-      .catch((error) => {
-        setUploading(false);
-        setError("Something went wrong. Please check your API token. " + error);
-      });
+    await writeStudyMaterials(apiToken, studyMaterials, progressReporter);
   };
 
   return (
@@ -114,11 +85,13 @@ function App() {
         <Button
           className="mt-4 mx-auto"
           onClick={handleUpload}
-          disabled={uploading}
+          disabled={!apiToken || uploading}
         >
           {uploading ? "Uploading..." : "Upload Translations"}
         </Button>
-        {uploading && <Progress className="mt-4" />}
+        {uploading && (
+          <Progress className="mt-4" max={maxSteps} value={currentStep} />
+        )}
         {error && <p className="mt-4">{error}</p>}
       </div>
     </TooltipProvider>

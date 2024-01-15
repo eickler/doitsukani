@@ -3,7 +3,22 @@
 import * as fs from "fs";
 import { getVocabulary } from "./src/lib/wanikani";
 
-const token = process.env.API_TOKEN;
+const TOKEN = process.env.API_TOKEN;
+
+const VOCAB_FILE = "vocab.json";
+
+const writeVocab = (vocabMap: Map<string, number>) => {
+  const vocabObject = Object.fromEntries(vocabMap.entries());
+  const json = JSON.stringify(vocabObject);
+  fs.writeFileSync(VOCAB_FILE, json);
+};
+
+const readVocab = (): Map<string, number> => {
+  const vocabJSON = fs.readFileSync(VOCAB_FILE, "utf8");
+  const vocabObject = JSON.parse(vocabJSON);
+  const vocabEntries: [string, number][] = Object.entries(vocabObject);
+  return new Map<string, number>(vocabEntries);
+};
 
 const fetchData = async (token: string) => {
   const vocabulary = await getVocabulary(token);
@@ -13,10 +28,8 @@ const fetchData = async (token: string) => {
       vocabIdMap.set(vocab.data.characters, vocab.id);
     }
   });
-
-  // Update the offline data
-  const json = JSON.stringify(Array.from(vocabIdMap.entries()));
-  fs.writeFileSync("vocab.json", json);
+  // Update the offline copy.
+  writeVocab(vocabIdMap);
   return vocabIdMap;
 };
 
@@ -108,17 +121,16 @@ const buildTranslations = (
 export const buildMap = async () => {
   const dictionary = readDictionaryFile("wadokudict2");
   let vocab = new Map<string, number>();
-  if (token) {
-    vocab = await fetchData(token);
+  if (TOKEN) {
+    vocab = await fetchData(TOKEN);
   } else {
-    // Use offline data
-    vocab = new Map<string, number>(
-      JSON.parse(fs.readFileSync("vocab.json", "utf8"))
-    );
+    // Use offline data instead.
+    vocab = readVocab();
   }
   const { translations, untranslated } = buildTranslations(dictionary, vocab);
 
-  const translationsJSON = JSON.stringify(Array.from(translations.entries()));
+  const translationsObject = Object.fromEntries(translations.entries());
+  const translationsJSON = JSON.stringify(translationsObject);
   fs.writeFileSync("src/translations.json", translationsJSON);
 
   const untranslatedJSON = JSON.stringify(untranslated);

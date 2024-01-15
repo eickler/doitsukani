@@ -1,12 +1,16 @@
 import {
   WKAssignment,
   WKStudyMaterial,
-  WKStudyMaterialData,
   WKSubject,
   WKVocabulary,
 } from "@bachmacintosh/wanikani-api-types";
 import axios from "axios";
 import Bottleneck from "bottleneck";
+
+/*
+  Wanikani API access methods.
+  TODO: Remove/clean-up function.
+*/
 
 /*
   Kindness settings for the Wanikani server. (Hard limit is 60 requests per minute.)
@@ -15,6 +19,11 @@ const apiLimits = {
   minTime: 1000,
   maxConcurrent: 1,
 };
+
+export interface ProgressReporter {
+  setMaxSteps: (max: number) => void;
+  nextStep: () => void;
+}
 
 export const getDataPages = async (token: string, api: string) => {
   let nextUrl = `https://api.wanikani.com/v2/${api}`;
@@ -60,89 +69,101 @@ export const getUnburnedVocabulary = async (token: string) => {
 };
 
 export const getStudyMaterials = async (token: string) => {
-  const query = "study_materials";
+  const query = "study_materials?subject_types=vocabulary";
   return (await getDataPages(token, query)) as WKStudyMaterial[];
 };
+
+interface WKStudyMaterialCreate {
+  subject: number;
+  synonyms: string[];
+}
 
 export const createStudyMaterials = async (
   token: string,
   limiter: Bottleneck,
-  material: WKStudyMaterialData
+  material: WKStudyMaterialCreate
 ) => {
   return limiter.schedule(() =>
     axios.post(
       "https://api.wanikani.com/v2/study_materials",
-      { study_material: material },
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
+        study_material: {
+          subject_id: material.subject,
+          meaning_synonyms: material.synonyms,
         },
-      }
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
     )
   );
 };
 
-export const updateStudyMaterials = async (
+interface WKStudyMaterialUpdate {
+  id: number;
+  synonyms: string[];
+}
+
+export const updateSynonyms = async (
   token: string,
   limiter: Bottleneck,
-  material: WKStudyMaterial
+  material: WKStudyMaterialUpdate
 ) => {
   return limiter.schedule(() =>
     axios.put(
       `https://api.wanikani.com/v2/study_materials/${material.id}`,
-      { study_material: material.data },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { study_material: { meaning_synonyms: material.synonyms } },
+      { headers: { Authorization: `Bearer ${token}` } }
     )
   );
 };
 
 export const writeStudyMaterials = async (
   token: string,
-  oldMaterial: WKStudyMaterial[],
-  newMaterial: WKStudyMaterialData[]
+  newMaterial: WKStudyMaterialCreate[],
+  progressReporter?: ProgressReporter
 ) => {
+  const oldMaterial = await getStudyMaterials(token);
   const oldMaterialMap = new Map<number, WKStudyMaterial>();
   oldMaterial.forEach((m) => oldMaterialMap.set(m.data.subject_id, m));
-  const toCreate = newMaterial.filter((m) => !oldMaterialMap.has(m.subject_id));
+  const toCreate = newMaterial.filter((m) => !oldMaterialMap.has(m.subject));
 
-  const newMaterialMap = new Map<number, WKStudyMaterialData>();
-  newMaterial.forEach((m) => newMaterialMap.set(m.subject_id, m));
+  const newMaterialMap = new Map<number, WKStudyMaterialCreate>();
+  newMaterial.forEach((m) => newMaterialMap.set(m.subject, m));
   const toUpdate = oldMaterial.filter((o) => {
     const newMaterialData = newMaterialMap.get(o.data.subject_id);
     if (newMaterialData) {
       return (
         JSON.stringify(o.data.meaning_synonyms.sort()) !==
-        JSON.stringify(newMaterialData.meaning_synonyms.sort())
+        JSON.stringify(newMaterialData.synonyms.sort())
       );
     }
   });
 
+  progressReporter?.setMaxSteps(toCreate.length + toUpdate.length);
+
   const limiter = new Bottleneck(apiLimits);
   const createPromises = toCreate.map((material) =>
-    createStudyMaterials(token, limiter, material)
+    createStudyMaterials(token, limiter, material).then(() =>
+      progressReporter?.nextStep()
+    )
   );
 
   const updatePromises = toUpdate.map((old) => {
     const newMaterialData = newMaterialMap.get(old.data.subject_id);
     if (newMaterialData) {
-      old.data.meaning_synonyms = [
-        ...new Set([
-          ...old.data.meaning_synonyms,
-          ...newMaterialData.meaning_synonyms,
-        ]),
-      ];
-      return updateStudyMaterials(token, limiter, old);
+      const update = {
+        id: old.id,
+        synonyms: [
+          ...new Set([
+            ...old.data.meaning_synonyms,
+            ...newMaterialData.synonyms,
+          ]),
+        ],
+      };
+      return updateSynonyms(token, limiter, update).then(() =>
+        progressReporter?.nextStep()
+      );
     }
   });
 
-  // Can I return the limiter here to do progress reporting?
   await Promise.all([...createPromises, ...updatePromises]);
 };
-
-/*
-  Remove the added study materials by marking them as hidden using a PUT request.
-  */
