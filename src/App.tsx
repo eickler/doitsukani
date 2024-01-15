@@ -5,7 +5,6 @@ import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Progress } from "./components/ui/progress";
-
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +16,7 @@ import {
   getUnburnedVocabulary,
   writeStudyMaterials,
 } from "./lib/wanikani";
+import { AxiosError } from "axios";
 
 type Translations = {
   [key: string]: string[];
@@ -40,14 +40,32 @@ function App() {
     setUploading(true);
     setError("");
 
-    const vocab = await getUnburnedVocabulary(apiToken);
-    const studyMaterials = vocab.map((v) => {
-      return { subject: v.id, synonyms: translations[v.id] };
-    });
-    await writeStudyMaterials(apiToken, studyMaterials, progressReporter);
-
-    setUploading(false);
-    setError("Done!");
+    try {
+      const vocab = await getUnburnedVocabulary(apiToken);
+      const studyMaterials = vocab.map((v) => {
+        return { subject: v.id, synonyms: translations[v.id] };
+      });
+      await writeStudyMaterials(apiToken, studyMaterials, progressReporter);
+      setError("Done!");
+    } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+        if (error.response.status === 401) {
+          setError("Please check the API token, it seems invalid.");
+        } else if (error.response.status === 403) {
+          setError(
+            'Please check if the API token. Did you tick "study_material:create" and "study_materials:update"?'
+          );
+        } else if (error.response.status === 429) {
+          setError(
+            "Too many requests. Please do not use Wanikani and Doitsukani in parallel while uploading."
+          );
+        }
+      } else {
+        setError("Error: " + error);
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (

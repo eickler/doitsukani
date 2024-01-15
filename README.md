@@ -4,7 +4,7 @@ A little tool to add German translations to the vocabulary of the [Wanikani](htt
 
 ## How can I use it?
 
-- Log in to your Wanikani account and create an API token: [https://www.wanikani.com/settings/personal_access_tokens].
+- Log in to your Wanikani account and create an API token: [https://www.wanikani.com/settings/personal_access_tokens]. Tick the "study_material:create" and "study_materials:update" boxes.
 - Copy the token and paste it into [https://eickler.github.io/doitsukani/].
 - Click "Add translations" to add German translations, or "Remove translations" to remove them.
 - Wait ...
