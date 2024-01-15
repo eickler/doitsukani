@@ -9,7 +9,7 @@ A little tool to add German translations to the vocabulary of the [Wanikani](htt
 - Click "Add translations" to add German translations, or "Remove translations" to remove them.
 - Wait ...
 
-Do not close the browser while the translations are added. The application just runs in your browser and does not run or store anything elsehwere. Hence, when you close the browser while the upload is still running, you will simply have not all translations uploaded. The process may take several minutes. (I deliberately made it a bit slower to not overload the Wanikani server.)
+The update takes very long since Wanikani has a request limit. Please make sure that you can leave your browser window open for a longer time. If you close the browser, the application will simply stop. If you want to continue, just run it again. The application will read your existing synonyms and will continue from where it left off.
 
 After everything completed, you should see German translations as "user synonyms" in your Wanikani app.
 

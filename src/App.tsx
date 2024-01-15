@@ -45,6 +45,9 @@ function App() {
       return { subject: v.id, synonyms: translations[v.id] };
     });
     await writeStudyMaterials(apiToken, studyMaterials, progressReporter);
+
+    setUploading(false);
+    setError("Done!");
   };
 
   return (
