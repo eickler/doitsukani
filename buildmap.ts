@@ -69,21 +69,22 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
 
 /*
   Wanikani has a limit of 64 bytes for the synonym field. This function
-  truncates a string to fit the limit. If it is truncated, an ellipsis is added
-  to indicate the truncation. Since an ellipsis is 3 bytes long, we need to truncate
-  to 61 bytes to fit the limit.
+  truncates a string to fit the limit if needed. If it is truncated, a tilde
+  is added at the end to indicate the truncation. Hence the maximum length is
+  63 characters. We also replace occurrences of the ellipsis character with a
+  tilde since Wanikani seems to hate it (I got size errors) and it is three bytes long.
 */
-const MAX_LENGTH = 61;
+const MAX_LENGTH = 55;
 
 const utfTruncate = (str: string): string => {
-  let truncated = str;
+  let truncated = str.replace(/…/g, "~");
   let wasTruncated = false;
   while (Buffer.byteLength(truncated) > MAX_LENGTH) {
     truncated = truncated.slice(0, -1);
     wasTruncated = true;
   }
   if (wasTruncated) {
-    truncated += "…";
+    truncated += "~";
   }
   return truncated;
 };
