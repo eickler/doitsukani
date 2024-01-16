@@ -26,14 +26,16 @@ const translations: Translations = translationsJson;
 function App() {
   const [apiToken, setApiToken] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
   const [maxSteps, setMaxSteps] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
-  // State for Progress component
+  const [progressText, setProgressText] = useState("");
+  const [error, setError] = useState("");
 
   const progressReporter: ProgressReporter = {
     setMaxSteps: (max: number) => setMaxSteps(max),
-    nextStep: () => setCurrentStep(currentStep + 1),
+    nextStep: () => setCurrentStep((step) => step + 1),
+    setText: (text: string) => setProgressText(text),
+    reset: () => setCurrentStep(0),
   };
 
   const handleUpload = async () => {
@@ -41,23 +43,33 @@ function App() {
     setError("");
 
     try {
-      const vocab = await getUnburnedVocabulary(apiToken);
-      const studyMaterials = vocab.map((v) => {
-        return { subject: v.id, synonyms: translations[v.id] };
-      });
+      const vocab = await getUnburnedVocabulary(apiToken, progressReporter);
+      const studyMaterials = vocab
+        .filter((v) => translations[v.id])
+        .map((v) => {
+          return { subject: v.id, synonyms: translations[v.id] };
+        });
       await writeStudyMaterials(apiToken, studyMaterials, progressReporter);
       setError("Done!");
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
         if (error.response.status === 401) {
-          setError("Please check the API token, it seems invalid.");
-        } else if (error.response.status === 403) {
+          if (error.response.data?.error?.includes("grant permission")) {
+            setError(
+              'Please use an API token with "study_material:create" and "study_materials:update" permissions.'
+            );
+          } else {
+            setError(
+              "Could not connect to Wanikani, please check the API token."
+            );
+          }
+        } else if (error.response.status === 422) {
           setError(
-            'Please check if the API token. Did you tick "study_material:create" and "study_materials:update"?'
+            `There is an issue with the data: ${error.response.data.error}`
           );
         } else if (error.response.status === 429) {
           setError(
-            "Too many requests. Please do not use Wanikani and Doitsukani in parallel while uploading."
+            "Too many requests, try again later. Please do not use Wanikani and Doitsukani in parallel."
           );
         }
       } else {
@@ -70,26 +82,29 @@ function App() {
 
   return (
     <TooltipProvider>
-      <div className="container mx-auto flex flex-col">
+      <div className="container mx-auto mt-10 w-96 flex flex-col">
         <img
           src={logo}
-          className="logo w-24 h24 mx-auto"
+          className="mx-auto w-24 h24 logo"
           alt="Doitsukani logo"
         />
         <h1 className="text-3xl">Doitsukani</h1>
-        <p>German translations for Wanikani.</p>
+        <p>
+          Add German to <a href="https://wanikani.com/">Wanikani</a>.
+        </p>
         <Tooltip>
           <TooltipTrigger asChild>
             <Input
               type="text"
               placeholder="Enter Wanikani API token"
               value={apiToken}
+              onFocus={() => setError("")}
               onChange={(e) => setApiToken(e.target.value)}
-              className="w-64 mt-10 mx-auto"
+              className="mx-auto mt-10 w-80"
             />
           </TooltipTrigger>
           <TooltipContent>
-            <ul className="w-96 m-4 text-left list-disc">
+            <ul className="m-4 text-left list-disc">
               <li>
                 On the Wanikani dashboard, click on your profile and select "API
                 Tokens".
@@ -104,16 +119,30 @@ function App() {
           </TooltipContent>
         </Tooltip>
         <Button
-          className="mt-4 mx-auto"
+          className="mx-auto mt-4 w-48"
           onClick={handleUpload}
           disabled={!apiToken || uploading}
         >
           {uploading ? "Uploading..." : "Upload Translations"}
         </Button>
         {uploading && (
-          <Progress className="mt-4" max={maxSteps} value={currentStep} />
+          <>
+            <p className="mt-6 text-xs">{progressText}</p>
+            <Progress
+              className="mx-auto mt-2 w-80"
+              value={(100 * currentStep) / maxSteps}
+            />
+          </>
         )}
-        {error && <p className="mt-4">{error}</p>}
+        {error && (
+          <p className="mx-auto mt-4 font-medium text-red-400">{error}</p>
+        )}
+        <p className="mx-auto mt-4 text-xs">
+          Please note that due to Wanikani's limitations, the upload can take a
+          very long time. If you navigate away from this page, the upload will
+          be cancelled. You can resume the upload by coming back to the page and
+          entering the API token again.
+        </p>
       </div>
     </TooltipProvider>
   );

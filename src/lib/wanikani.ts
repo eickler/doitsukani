@@ -1,5 +1,6 @@
 import {
   WKAssignment,
+  WKCollection,
   WKStudyMaterial,
   WKSubject,
   WKVocabulary,
@@ -23,12 +24,19 @@ const apiLimits = {
 export interface ProgressReporter {
   setMaxSteps: (max: number) => void;
   nextStep: () => void;
+  setText: (text: string) => void;
+  reset: () => void;
 }
 
-export const getDataPages = async (token: string, api: string) => {
+export const getDataPages = async (
+  token: string,
+  api: string,
+  progressReporter?: ProgressReporter
+) => {
   let nextUrl = `https://api.wanikani.com/v2/${api}`;
   const result = [];
   const limiter = new Bottleneck(apiLimits);
+  progressReporter?.reset();
 
   while (nextUrl) {
     const response = await limiter.schedule(() =>
@@ -38,15 +46,28 @@ export const getDataPages = async (token: string, api: string) => {
         },
       })
     );
-    result.push(...response.data.data);
+    const collection = response.data as WKCollection;
+    result.push(...collection.data);
+
+    const totalSteps = collection.total_count / collection.pages.per_page;
+    progressReporter?.setMaxSteps(totalSteps);
+    progressReporter?.nextStep();
+
     nextUrl = response.data.pages.next_url;
   }
   return result;
 };
 
-export const getVocabulary = async (token: string) => {
-  const query = "subjects";
-  const subjects = (await getDataPages(token, query)) as WKSubject[];
+export const getVocabulary = async (
+  token: string,
+  progressReporter?: ProgressReporter
+) => {
+  progressReporter?.setText("Getting vocabulary...");
+  const subjects = (await getDataPages(
+    token,
+    "subjects",
+    progressReporter
+  )) as WKSubject[];
   const onlyVocabulary = (subject: WKSubject) =>
     subject.object === "vocabulary";
   const result = subjects.filter(onlyVocabulary) as WKVocabulary[];
@@ -55,22 +76,37 @@ export const getVocabulary = async (token: string) => {
 
 export const getAssignments = async (
   token: string,
-  burned: boolean = false
+  burned: boolean = false,
+  progressReporter?: ProgressReporter
 ) => {
-  const query = `assignments?burned=${burned}`;
-  return (await getDataPages(token, query)) as WKAssignment[];
+  progressReporter?.setText("Getting assignments...");
+  return (await getDataPages(
+    token,
+    `assignments?burned=${burned}`,
+    progressReporter
+  )) as WKAssignment[];
 };
 
-export const getUnburnedVocabulary = async (token: string) => {
-  const vocabs = await getVocabulary(token);
-  const burned = await getAssignments(token, true);
+export const getUnburnedVocabulary = async (
+  token: string,
+  progressReporter?: ProgressReporter
+) => {
+  const vocabs = await getVocabulary(token, progressReporter);
+  const burned = await getAssignments(token, true, progressReporter);
   const burnedSubjects = new Set(burned.map((b) => b.data.subject_id));
   return vocabs.filter((v) => !burnedSubjects.has(v.id));
 };
 
-export const getStudyMaterials = async (token: string) => {
-  const query = "study_materials?subject_types=vocabulary";
-  return (await getDataPages(token, query)) as WKStudyMaterial[];
+export const getStudyMaterials = async (
+  token: string,
+  progressReporter?: ProgressReporter
+) => {
+  progressReporter?.setText("Getting study materials...");
+  return (await getDataPages(
+    token,
+    "study_materials?subject_types=vocabulary",
+    progressReporter
+  )) as WKStudyMaterial[];
 };
 
 interface WKStudyMaterialCreate {
@@ -102,7 +138,7 @@ interface WKStudyMaterialUpdate {
   synonyms: string[];
 }
 
-export const updateSynonyms = async (
+export const updateSynonyms = (
   token: string,
   limiter: Bottleneck,
   material: WKStudyMaterialUpdate
@@ -138,32 +174,29 @@ export const writeStudyMaterials = async (
     }
   });
 
+  progressReporter?.reset();
+  progressReporter?.setText("Updating study materials...");
   progressReporter?.setMaxSteps(toCreate.length + toUpdate.length);
 
   const limiter = new Bottleneck(apiLimits);
-  const createPromises = toCreate.map((material) =>
-    createStudyMaterials(token, limiter, material).then(() =>
-      progressReporter?.nextStep()
-    )
-  );
+  for (const material of toCreate) {
+    await createStudyMaterials(token, limiter, material);
+    progressReporter?.nextStep();
+  }
 
-  const updatePromises = toUpdate.map((old) => {
-    const newMaterialData = newMaterialMap.get(old.data.subject_id);
+  for (const material of toUpdate) {
+    const newMaterialData = newMaterialMap.get(material.data.subject_id);
     if (newMaterialData) {
-      const update = {
-        id: old.id,
+      await updateSynonyms(token, limiter, {
+        id: material.id,
         synonyms: [
           ...new Set([
-            ...old.data.meaning_synonyms,
+            ...material.data.meaning_synonyms,
             ...newMaterialData.synonyms,
           ]),
         ],
-      };
-      return updateSynonyms(token, limiter, update).then(() =>
-        progressReporter?.nextStep()
-      );
+      });
+      progressReporter?.nextStep();
     }
-  });
-
-  await Promise.all([...createPromises, ...updatePromises]);
+  }
 };
