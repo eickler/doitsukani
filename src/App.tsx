@@ -4,7 +4,6 @@ import logo from "./assets/doitsukani.png";
 import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-import { Progress } from "./components/ui/progress";
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +16,7 @@ import {
   writeStudyMaterials,
 } from "./lib/wanikani";
 import { AxiosError } from "axios";
+import { ProgressReport } from "./lib/progress";
 
 type Translations = {
   [key: string]: string[];
@@ -69,7 +69,7 @@ function App() {
           );
         } else if (error.response.status === 429) {
           setError(
-            "Too many requests, try again later. Please do not use Wanikani and Doitsukani in parallel."
+            "Too many requests, try again later. Note: Do not use Wanikani and Doitsukani in parallel."
           );
         }
       } else {
@@ -126,22 +126,20 @@ function App() {
           {uploading ? "Uploading..." : "Upload Translations"}
         </Button>
         {uploading && (
-          <>
-            <p className="mt-6 text-xs">{progressText}</p>
-            <Progress
-              className="mx-auto mt-2 w-80"
-              value={(100 * currentStep) / maxSteps}
-            />
-          </>
+          <ProgressReport
+            text={progressText}
+            step={currentStep}
+            max={maxSteps}
+          />
         )}
         {error && (
           <p className="mx-auto mt-4 font-medium text-red-400">{error}</p>
         )}
         <p className="mx-auto mt-4 text-xs">
-          Please note that due to Wanikani's limitations, the upload can take a
-          very long time. If you navigate away from this page, the upload will
-          be cancelled. You can resume the upload by coming back to the page and
-          entering the API token again.
+          Due to Wanikani's server limitations, the upload can take a very long
+          time. Please do not use Wanikani at the same time. If you navigate
+          away from this page, the upload will be stopped. You can resume the
+          upload by returning to this page and entering the API token again.
         </p>
       </div>
     </TooltipProvider>

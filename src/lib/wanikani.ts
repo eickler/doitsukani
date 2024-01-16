@@ -17,7 +17,7 @@ import Bottleneck from "bottleneck";
   Kindness settings for the Wanikani server. (Hard limit is 60 requests per minute.)
 */
 const apiLimits = {
-  minTime: 1000,
+  minTime: 1100,
   maxConcurrent: 1,
 };
 

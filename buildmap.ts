@@ -6,7 +6,6 @@ import { getVocabulary } from "./src/lib/wanikani";
 const TOKEN = process.env.API_TOKEN;
 
 const VOCAB_FILE = "vocab.json";
-const MAX_LENGTH = 64; // Maximum synonym length in Wanikani.
 
 const writeVocab = (vocabMap: Map<string, number>) => {
   const vocabObject = Object.fromEntries(vocabMap.entries());
@@ -69,27 +68,41 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
 };
 
 /*
+  Wanikani has a limit of 64 bytes for the synonym field. This function
+  truncates a string to fit the limit. If it is truncated, an ellipsis is added
+  to indicate the truncation. Since an ellipsis is 3 bytes long, we need to truncate
+  to 61 bytes to fit the limit.
+*/
+const MAX_LENGTH = 61;
+
+const utfTruncate = (str: string): string => {
+  let truncated = str;
+  let wasTruncated = false;
+  while (Buffer.byteLength(truncated) > MAX_LENGTH) {
+    truncated = truncated.slice(0, -1);
+    wasTruncated = true;
+  }
+  if (wasTruncated) {
+    truncated += "…";
+  }
+  return truncated;
+};
+
+/*
   There are words having a large number of meanings, which we don't want to
   store individually in Wanikani. We apply a heuristic that the longer the
   meaning, the less likely it is a concise or useful translation. The shortest
   translations are stored individually, the rest is condensed into a single
-  translation. Since there is a limit in the size of the synonym field in
-  Wanikani, we also limit the length of the condensed translation.
+  translation. All meanings are capped to fit into the 64 byte limit.
  */
 const condense = (meanings: string[]) => {
-  const sortedMeanings = meanings
-    .filter((meaning) => meaning.length < MAX_LENGTH)
-    .sort((a, b) => a.length - b.length);
+  const sortedMeanings = meanings.sort((a, b) => a.length - b.length);
   const result = sortedMeanings.slice(0, 3);
   const remaining = sortedMeanings.slice(3);
   if (remaining.length > 0) {
-    let remainingStr = remaining.join(";");
-    if (remainingStr.length >= MAX_LENGTH) {
-      remainingStr = remainingStr.slice(0, MAX_LENGTH - 1) + "…";
-    }
-    result.push(remainingStr);
+    result.push(remaining.join(";"));
   }
-  return result;
+  return result.map(utfTruncate);
 };
 
 const readDictionaryFile = (filePath: string): Map<string, string[]> => {
