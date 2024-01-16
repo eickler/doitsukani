@@ -6,6 +6,7 @@ import { getVocabulary } from "./src/lib/wanikani";
 const TOKEN = process.env.API_TOKEN;
 
 const VOCAB_FILE = "vocab.json";
+const MAX_LENGTH = 64; // Maximum synonym length in Wanikani.
 
 const writeVocab = (vocabMap: Map<string, number>) => {
   const vocabObject = Object.fromEntries(vocabMap.entries());
@@ -72,16 +73,23 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
   store individually in Wanikani. We apply a heuristic that the longer the
   meaning, the less likely it is a concise or useful translation. The shortest
   translations are stored individually, the rest is condensed into a single
-  translation.
+  translation. Since there is a limit in the size of the synonym field in
+  Wanikani, we also limit the length of the condensed translation.
  */
 const condense = (meanings: string[]) => {
-  const sortedMeanings = meanings.sort((a, b) => a.length - b.length);
-  const firstThree = sortedMeanings.slice(0, 3);
+  const sortedMeanings = meanings
+    .filter((meaning) => meaning.length < MAX_LENGTH)
+    .sort((a, b) => a.length - b.length);
+  const result = sortedMeanings.slice(0, 3);
   const remaining = sortedMeanings.slice(3);
   if (remaining.length > 0) {
-    firstThree.push(remaining.join("; "));
+    let remainingStr = remaining.join(";");
+    if (remainingStr.length >= MAX_LENGTH) {
+      remainingStr = remainingStr.slice(0, MAX_LENGTH - 1) + "…";
+    }
+    result.push(remainingStr);
   }
-  return firstThree;
+  return result;
 };
 
 const readDictionaryFile = (filePath: string): Map<string, string[]> => {
