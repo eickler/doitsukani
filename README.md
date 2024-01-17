@@ -2,9 +2,11 @@
 
 A little tool to add German translations to the vocabulary of the [Wanikani](https://wanikani.com) Japanese training app. It is based on EDICT2 files from the [Wadoku project](https://www.wadoku.de/wiki/display/WAD/Downloads+und+Links).
 
+<p>
   <img src="durtles screenshot.jpg" width="150" style="vertical-align: middle;"/>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <img src="wanikani screenshot.png" width="200" style="vertical-align: middle;"/>
+</p>
 
 ## How can I use it?
 
