@@ -107,7 +107,7 @@ const utfTruncate = (str: string): string => {
  */
 const MAX_SYNONYMS = 8;
 
-const condense = (meanings: string[]) => {
+export const condense = (meanings: string[]) => {
   return meanings
     .sort((a, b) => a.length - b.length)
     .slice(0, MAX_SYNONYMS)
@@ -127,7 +127,7 @@ const readDictionaryFile = (filePath: string): Map<string, string[]> => {
   return dictionary;
 };
 
-const buildTranslations = (
+export const buildTranslations = (
   dictionary: Map<string, string[]>,
   vocab: Map<string, number>
 ) => {
@@ -135,7 +135,7 @@ const buildTranslations = (
   const untranslated: string[] = [];
 
   vocab.forEach((id, word) => {
-    // Wadoku uses an ellipsis character instead of a tilde.
+    // Wadoku uses an ellipsis character instead of a Japanese tilde.
     word = word.replace(/〜/, "…");
     const meanings = dictionary.get(word);
     if (meanings) {
