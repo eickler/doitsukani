@@ -1,15 +1,16 @@
 {
   "name": "doitsukani",
-  "private": true,
-  "version": "0.0.0",
+  "description": "A tool to include German translations into your Wanikani account.",
+  "homepage": "https://eickler.github.io/doitsukani/",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite-node buildmap.ts run",
+    "build": "vite build && vite-node tools/buildmap.ts run",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
-    "buildmap": "vite-node buildmap.ts run"
+    "buildmap": "vite-node tools/buildmap.ts run"
   },
   "dependencies": {
     "@bachmacintosh/wanikani-api-types": "^1.5.0",

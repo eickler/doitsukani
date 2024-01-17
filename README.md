@@ -3,9 +3,9 @@
 [Doitsukani](https://eickler.github.io/doitsukani) is a tool to add German translations to the vocabulary of the [Wanikani](https://wanikani.com) Japanese training app. It is based on EDICT2 files from the [Wadoku project](https://www.wadoku.de/wiki/display/WAD/Downloads+und+Links).
 
 <p>
-  <img src="durtles screenshot.jpg" width="150" style="vertical-align: middle;"/>
+  <img src="img/durtles.jpg" width="150" style="vertical-align: middle;"/>
   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="wanikani screenshot.png" width="200" style="vertical-align: middle;"/>
+  <img src="img/wanikani.png" width="200" style="vertical-align: middle;"/>
 </p>
 
 ## How can I use it?
@@ -17,9 +17,9 @@
 
 Notes:
 
- - Only vocabulary that is not yet burned is translated. 
- - The update can take more than one hour if you have not burned anything yet. This is because Wanikani only permits one update per second roughly.
- - If you close the browser during the update, the application will simply stop. If you want to continue, just run it again. The application will resume from where it left off.
+- Only vocabulary that is not yet burned is translated.
+- The update can take more than one hour if you have not burned anything yet. This is because Wanikani only permits one update per second roughly.
+- If you close the browser during the update, the application will simply stop. If you want to continue, just run it again. The application will resume from where it left off.
 
 After everything completed, you should see German translations as "user synonyms" in your Wanikani app as shown in the screenshots.
 

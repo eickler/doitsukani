@@ -1,11 +1,14 @@
 #!/usr/bin/env vite-node --script
 
 import * as fs from "fs";
-import { getVocabulary } from "./src/lib/wanikani";
+import { getVocabulary } from "../src/lib/wanikani";
 
 const TOKEN = process.env.API_TOKEN;
 
-const VOCAB_FILE = "vocab.json";
+const DICTIONARY_FILE = "tools/wadokudict2";
+const VOCAB_FILE = "tools/vocab.json";
+const TRANSLATIONS_FILE = "src/translations.json";
+const MISSES_FILE = "tools/misses.json";
 
 const writeVocab = (vocabMap: Map<string, number>) => {
   const vocabObject = Object.fromEntries(vocabMap.entries());
@@ -146,7 +149,7 @@ const buildTranslations = (
 };
 
 export const buildMap = async () => {
-  const dictionary = readDictionaryFile("wadokudict2");
+  const dictionary = readDictionaryFile(DICTIONARY_FILE);
   let vocab = new Map<string, number>();
   if (TOKEN) {
     vocab = await fetchData(TOKEN);
@@ -158,13 +161,14 @@ export const buildMap = async () => {
 
   const translationsObject = Object.fromEntries(translations.entries());
   const translationsJSON = JSON.stringify(translationsObject);
-  fs.writeFileSync("src/translations.json", translationsJSON);
+  fs.writeFileSync(TRANSLATIONS_FILE, translationsJSON);
 
   const untranslatedJSON = JSON.stringify(untranslated);
-  fs.writeFileSync("misses.json", untranslatedJSON);
+  fs.writeFileSync(MISSES_FILE, untranslatedJSON);
 };
 
 if (process.argv.length > 2) {
   console.log("Creating translations...");
   buildMap();
+  console.log("Done.");
 }
