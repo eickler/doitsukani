@@ -9,14 +9,9 @@ import axios from "axios";
 import Bottleneck from "bottleneck";
 
 /*
-  Wanikani API access methods.
-  TODO: Remove/clean-up function.
-*/
-
-/*
   Kindness settings for the Wanikani server. (Hard limit is 60 requests per minute.)
 */
-const apiLimits = {
+const API_LIMITS = {
   minTime: 1100,
   maxConcurrent: 1,
 };
@@ -35,7 +30,7 @@ export const getDataPages = async (
 ) => {
   let nextUrl = `https://api.wanikani.com/v2/${api}`;
   const result = [];
-  const limiter = new Bottleneck(apiLimits);
+  const limiter = new Bottleneck(API_LIMITS);
   progressReporter?.reset();
 
   while (nextUrl) {
@@ -174,11 +169,15 @@ export const writeStudyMaterials = async (
     }
   });
 
-  progressReporter?.reset();
-  progressReporter?.setText("Updating study materials...");
-  progressReporter?.setMaxSteps(toCreate.length + toUpdate.length);
+  const totalSteps = toCreate.length + toUpdate.length;
+  const eta = new Date(Date.now() + totalSteps * API_LIMITS.minTime);
+  const etaString = eta.toLocaleTimeString([], { timeStyle: "short" });
 
-  const limiter = new Bottleneck(apiLimits);
+  progressReporter?.reset();
+  progressReporter?.setText(`Updating study materials... (ETA ~${etaString})`);
+  progressReporter?.setMaxSteps(totalSteps);
+
+  const limiter = new Bottleneck(API_LIMITS);
   for (const material of toCreate) {
     await createStudyMaterials(token, limiter, material);
     progressReporter?.nextStep();

@@ -136,8 +136,8 @@ function App() {
           <p className="mx-auto mt-4 font-medium text-red-400">{error}</p>
         )}
         <p className="mx-auto mt-4 text-xs">
-          Due to Wanikani's server limitations, the upload can take a very long
-          time. Please do not use Wanikani at the same time. If you navigate
+          Due to Wanikani's server limitations, the upload can take more than
+          one hour. Please do not use Wanikani at the same time. If you navigate
           away from this page, the upload will be stopped. You can resume the
           upload by returning to this page and entering the API token again.
         </p>

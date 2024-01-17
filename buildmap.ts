@@ -44,7 +44,10 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
     const japaneseWordList = japaneseWords.split(";");
 
     japaneseWordList.forEach((japaneseWord) => {
-      const germanMeanings = germanTranslations.split("/");
+      const germanMeanings = germanTranslations
+        .split("/")
+        .map((meaning) => meaning.trim());
+
       const existingMeanings = dictionary.get(japaneseWord) || [];
       /*
         In the conversion from JMDict/XML format to EDICT2 format,
@@ -72,9 +75,9 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
   truncates a string to fit the limit if needed. If it is truncated, a tilde
   is added at the end to indicate the truncation. Hence the maximum length is
   63 characters. We also replace occurrences of the ellipsis character with a
-  tilde since Wanikani seems to hate it (I got size errors) and it is three bytes long.
+  tilde since it is three bytes long.
 */
-const MAX_LENGTH = 55;
+const MAX_LENGTH = 63;
 
 const utfTruncate = (str: string): string => {
   let truncated = str.replace(/…/g, "~");
@@ -90,20 +93,22 @@ const utfTruncate = (str: string): string => {
 };
 
 /*
-  There are words having a large number of meanings, which we don't want to
-  store individually in Wanikani. We apply a heuristic that the longer the
-  meaning, the less likely it is a concise or useful translation. The shortest
-  translations are stored individually, the rest is condensed into a single
-  translation. All meanings are capped to fit into the 64 byte limit.
+  There are words having a large number of meanings, which we can't
+  and probably don't want to store all in Wanikani. We apply a heuristic
+  that the longer the meaning, the less likely it is a concise or useful
+  translation. The shortest translations are stored individually up to
+  the Wanikani limit of eight translations. All meanings are capped to
+  fit into the 64 byte limit.
+  See https://community.wanikani.com/t/updates-to-synonyms-on-item-pages/53932
+  for a description of the API limitations for synonyms.
  */
+const MAX_SYNONYMS = 8;
+
 const condense = (meanings: string[]) => {
-  const sortedMeanings = meanings.sort((a, b) => a.length - b.length);
-  const result = sortedMeanings.slice(0, 3);
-  const remaining = sortedMeanings.slice(3);
-  if (remaining.length > 0) {
-    result.push(remaining.join(";"));
-  }
-  return result.map(utfTruncate);
+  return meanings
+    .sort((a, b) => a.length - b.length)
+    .slice(0, MAX_SYNONYMS)
+    .map(utfTruncate);
 };
 
 const readDictionaryFile = (filePath: string): Map<string, string[]> => {
