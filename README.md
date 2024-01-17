@@ -1,6 +1,10 @@
-# ドイツ蟹　 Doitsukani
+# <img src="src/assets/doitsukani.png" width="54" height="56"/> Doitsukani ドイツ蟹
 
 A little tool to add German translations to the vocabulary of the [Wanikani](https://wanikani.com) Japanese training app. It is based on EDICT2 files from the [Wadoku project](https://www.wadoku.de/wiki/display/WAD/Downloads+und+Links).
+
+  <img src="durtles screenshot.jpg" width="150" style="vertical-align: middle;"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="wanikani screenshot.png" width="200" style="vertical-align: middle;"/>
 
 ## How can I use it?
 
@@ -16,4 +20,4 @@ After everything completed, you should see German translations as "user synonyms
 Limitations:
 
 - There are about 100 vocabulary items that do not have a counterpart in Wadoku.
-- Wadoku has a LOT of alternative translations for many words. To not add tens of synonyms, I am using a small heuristic to add up to three translations as they are. Any remaining translations are added as a potentially long single user synonym.
+- Wadoku has a LOT of alternative translations for many words. To not add tens of synonyms, I am using a small heuristic to add up to eight translations as they are.
