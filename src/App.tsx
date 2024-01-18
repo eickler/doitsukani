@@ -1,6 +1,7 @@
-import translationsJson from "./translations.json";
 import { useState } from "react";
-import logo from "./assets/doitsukani.png";
+import { useAtom } from "jotai";
+import { AxiosError } from "axios";
+
 import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -10,46 +11,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./components/ui/tooltip";
-import {
-  ProgressReporter,
-  getUnburnedVocabulary,
-  writeStudyMaterials,
-} from "./lib/wanikani";
-import { AxiosError } from "axios";
-import { ProgressReport } from "./lib/progress";
 
-type Translations = {
-  [key: string]: string[];
-};
-const translations: Translations = translationsJson;
+import { upload } from "./lib/wanikani";
+import { ProgressReport } from "./components/progress";
+import { writeProgressAtom } from "./lib/progressreporter";
 
 function App() {
   const [apiToken, setApiToken] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [maxSteps, setMaxSteps] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progressText, setProgressText] = useState("");
   const [error, setError] = useState("");
-
-  const progressReporter: ProgressReporter = {
-    setMaxSteps: (max: number) => setMaxSteps(max),
-    nextStep: () => setCurrentStep((step) => step + 1),
-    setText: (text: string) => setProgressText(text),
-    reset: () => setCurrentStep(0),
-  };
+  const [, setProgress] = useAtom(writeProgressAtom);
 
   const handleUpload = async () => {
     setUploading(true);
     setError("");
 
     try {
-      const vocab = await getUnburnedVocabulary(apiToken, progressReporter);
-      const studyMaterials = vocab
-        .filter((v) => translations[v.id])
-        .map((v) => {
-          return { subject: v.id, synonyms: translations[v.id] };
-        });
-      await writeStudyMaterials(apiToken, studyMaterials, progressReporter);
+      await upload(apiToken, setProgress);
       setError("Done!");
     } catch (error) {
       if (error instanceof AxiosError && error.response) {
@@ -84,7 +62,7 @@ function App() {
     <TooltipProvider>
       <div className="container mx-auto mt-10 w-96 flex flex-col">
         <img
-          src={logo}
+          src="doitsukani.png"
           className="mx-auto w-24 h24 logo"
           alt="Doitsukani logo"
         />
@@ -125,13 +103,7 @@ function App() {
         >
           {uploading ? "Uploading..." : "Upload Translations"}
         </Button>
-        {uploading && (
-          <ProgressReport
-            text={progressText}
-            step={currentStep}
-            max={maxSteps}
-          />
-        )}
+        {uploading && <ProgressReport />}
         {error && (
           <p className="mx-auto mt-4 font-medium text-red-400">{error}</p>
         )}
