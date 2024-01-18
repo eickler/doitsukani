@@ -62,8 +62,8 @@ function App() {
     <TooltipProvider>
       <div className="container mx-auto mt-10 w-96 flex flex-col">
         <img
-          src="doitsukani.png"
-          className="mx-auto w-24 h24 logo"
+          src="doitsukani.webp"
+          className="mx-auto w-24 logo"
           alt="Doitsukani logo"
         />
         <h1 className="text-3xl">Doitsukani</h1>
