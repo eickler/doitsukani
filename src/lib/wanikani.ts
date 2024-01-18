@@ -7,6 +7,14 @@ import {
 } from "@bachmacintosh/wanikani-api-types";
 import axios from "axios";
 import Bottleneck from "bottleneck";
+import { SetProgress } from "./progressreporter";
+
+import translationsJson from "../translations.json";
+
+type Translations = {
+  [key: string]: string[];
+};
+const translations: Translations = translationsJson;
 
 /*
   Kindness settings for the Wanikani server. (Hard limit is 60 requests per minute.)
@@ -16,22 +24,16 @@ const API_LIMITS = {
   maxConcurrent: 1,
 };
 
-export interface ProgressReporter {
-  setMaxSteps: (max: number) => void;
-  nextStep: () => void;
-  setText: (text: string) => void;
-  reset: () => void;
-}
-
 export const getDataPages = async (
   token: string,
   api: string,
-  progressReporter?: ProgressReporter
+  task: string,
+  setProgress?: SetProgress
 ) => {
   let nextUrl = `https://api.wanikani.com/v2/${api}`;
+  let page = 0;
   const result = [];
   const limiter = new Bottleneck(API_LIMITS);
-  progressReporter?.reset();
 
   while (nextUrl) {
     const response = await limiter.schedule(() =>
@@ -44,9 +46,12 @@ export const getDataPages = async (
     const collection = response.data as WKCollection;
     result.push(...collection.data);
 
-    const totalSteps = collection.total_count / collection.pages.per_page;
-    progressReporter?.setMaxSteps(totalSteps);
-    progressReporter?.nextStep();
+    const progress = {
+      text: task,
+      currentStep: ++page,
+      lastStep: collection.total_count / collection.pages.per_page,
+    };
+    setProgress?.(progress);
 
     nextUrl = response.data.pages.next_url;
   }
@@ -55,13 +60,13 @@ export const getDataPages = async (
 
 export const getVocabulary = async (
   token: string,
-  progressReporter?: ProgressReporter
+  setProgress?: SetProgress
 ) => {
-  progressReporter?.setText("Getting vocabulary...");
   const subjects = (await getDataPages(
     token,
     "subjects",
-    progressReporter
+    "Getting vocabulary...",
+    setProgress
   )) as WKSubject[];
   const onlyVocabulary = (subject: WKSubject) =>
     subject.object === "vocabulary";
@@ -72,35 +77,35 @@ export const getVocabulary = async (
 export const getAssignments = async (
   token: string,
   burned: boolean = false,
-  progressReporter?: ProgressReporter
+  setProgress?: SetProgress
 ) => {
-  progressReporter?.setText("Getting assignments...");
   return (await getDataPages(
     token,
     `assignments?burned=${burned}`,
-    progressReporter
+    "Getting assignments...",
+    setProgress
   )) as WKAssignment[];
 };
 
 export const getUnburnedVocabulary = async (
   token: string,
-  progressReporter?: ProgressReporter
+  setProgress?: SetProgress
 ) => {
-  const vocabs = await getVocabulary(token, progressReporter);
-  const burned = await getAssignments(token, true, progressReporter);
+  const vocabs = await getVocabulary(token, setProgress);
+  const burned = await getAssignments(token, true, setProgress);
   const burnedSubjects = new Set(burned.map((b) => b.data.subject_id));
   return vocabs.filter((v) => !burnedSubjects.has(v.id));
 };
 
 export const getStudyMaterials = async (
   token: string,
-  progressReporter?: ProgressReporter
+  setProgress?: SetProgress
 ) => {
-  progressReporter?.setText("Getting study materials...");
   return (await getDataPages(
     token,
     "study_materials?subject_types=vocabulary",
-    progressReporter
+    "Getting study materials...",
+    setProgress
   )) as WKStudyMaterial[];
 };
 
@@ -150,7 +155,7 @@ export const updateSynonyms = (
 export const writeStudyMaterials = async (
   token: string,
   newMaterial: WKStudyMaterialCreate[],
-  progressReporter?: ProgressReporter
+  setProgress?: SetProgress
 ) => {
   const oldMaterial = await getStudyMaterials(token);
   const oldMaterialMap = new Map<number, WKStudyMaterial>();
@@ -169,18 +174,20 @@ export const writeStudyMaterials = async (
     }
   });
 
+  let step = 0;
   const totalSteps = toCreate.length + toUpdate.length;
   const eta = new Date(Date.now() + totalSteps * API_LIMITS.minTime);
   const etaString = eta.toLocaleTimeString([], { timeStyle: "short" });
-
-  progressReporter?.reset();
-  progressReporter?.setText(`Updating study materials... (ETA ~${etaString})`);
-  progressReporter?.setMaxSteps(totalSteps);
+  const etaText = `Updating study materials... (ETA ~${etaString})`;
 
   const limiter = new Bottleneck(API_LIMITS);
   for (const material of toCreate) {
     await createStudyMaterials(token, limiter, material);
-    progressReporter?.nextStep();
+    setProgress?.({
+      text: etaText,
+      currentStep: ++step,
+      lastStep: totalSteps,
+    });
   }
 
   for (const material of toUpdate) {
@@ -195,7 +202,21 @@ export const writeStudyMaterials = async (
           ]),
         ],
       });
-      progressReporter?.nextStep();
+      setProgress?.({
+        text: etaText,
+        currentStep: ++step,
+        lastStep: totalSteps,
+      });
     }
   }
+};
+
+export const upload = async (apiToken: string, setProgress?: SetProgress) => {
+  const vocab = await getUnburnedVocabulary(apiToken, setProgress);
+  const studyMaterials = vocab
+    .filter((v) => translations[v.id])
+    .map((v) => {
+      return { subject: v.id, synonyms: translations[v.id] };
+    });
+  await writeStudyMaterials(apiToken, studyMaterials, setProgress);
 };
