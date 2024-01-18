@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAtom } from "jotai";
 import { AxiosError } from "axios";
 
-import logo from "./assets/doitsukani.png";
 import "./App.css";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -63,7 +62,7 @@ function App() {
     <TooltipProvider>
       <div className="container mx-auto mt-10 w-96 flex flex-col">
         <img
-          src={logo}
+          src="doitsukani.png"
           className="mx-auto w-24 h24 logo"
           alt="Doitsukani logo"
         />
