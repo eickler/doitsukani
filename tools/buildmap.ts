@@ -2,7 +2,7 @@
 
 import * as fs from "fs";
 import { readDictionaryFile } from "./edict2parser";
-import { getVocab } from "./wkvocab";
+import { getWanikaniVocab } from "./wkvocab";
 
 const TOKEN = process.env.API_TOKEN;
 
@@ -18,8 +18,6 @@ export const buildTranslations = (
   const untranslated: string[] = [];
 
   vocab.forEach((id, word) => {
-    // Wadoku uses an ellipsis character instead of a Japanese tilde. --> Move into parser in opposite logic?
-    word = word.replace(/〜/, "…");
     const meanings = dictionary.get(word);
     if (meanings) {
       translations.set(id, meanings);
@@ -42,9 +40,9 @@ const writeUntranslated = (untranslated: string[]) => {
   fs.writeFileSync(MISSES_FILE, untranslatedJSON);
 };
 
-export const buildMap = async () => {
+export const translateVocabulary = async () => {
   const dictionary = readDictionaryFile(DICTIONARY_FILE);
-  const vocab = await getVocab(TOKEN);
+  const vocab = await getWanikaniVocab(TOKEN);
   const { translations, untranslated } = buildTranslations(dictionary, vocab);
   writeTranslations(translations);
   writeUntranslated(untranslated);
@@ -52,6 +50,6 @@ export const buildMap = async () => {
 
 if (process.argv.length > 2) {
   console.log("Creating translations...");
-  buildMap();
+  translateVocabulary();
   console.log("Done.");
 }

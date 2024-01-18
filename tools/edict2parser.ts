@@ -19,6 +19,7 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
     const japaneseWordList = japaneseWords.split(";");
 
     japaneseWordList.forEach((japaneseWord) => {
+      japaneseWord = japaneseWord.replace(/…/, "〜");
       const germanMeanings = germanTranslations
         .split("/")
         .map((meaning) => meaning.trim());

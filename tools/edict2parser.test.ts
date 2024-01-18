@@ -27,9 +27,9 @@ describe("EDICT2 parser", () => {
     parse(line, dictionaryMap);
 
     expect(dictionaryMap.size).toEqual(1);
-    expect(dictionaryMap.get("…倒れ")).toBeDefined();
-    expect(dictionaryMap.get("…倒れ")?.length).toEqual(2);
-    expect(dictionaryMap.get("…倒れ")?.[0]).toEqual(
+    expect(dictionaryMap.get("〜倒れ")).toBeDefined();
+    expect(dictionaryMap.get("〜倒れ")?.length).toEqual(2);
+    expect(dictionaryMap.get("〜倒れ")?.[0]).toEqual(
       expect.stringContaining("durch den vorstehenden")
     );
   });

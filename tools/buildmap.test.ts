@@ -18,16 +18,4 @@ describe("Vocabulary translation", () => {
     ]);
     expect(untranslated).toEqual(["訳しにくい"]);
   });
-
-  it("should match tildes and ellipses correctly", () => {
-    const vocab = new Map<string, number>();
-    vocab.set("〜円", 1);
-    const dictionary = new Map<string, string[]>();
-    dictionary.set("…円", ["… Yen", "…¥"]);
-
-    const { translations, untranslated } = buildTranslations(dictionary, vocab);
-
-    expect(translations.get(1)).toEqual(["… Yen", "…¥"]);
-    expect(untranslated.length).toEqual(0);
-  });
 });

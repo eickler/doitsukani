@@ -29,7 +29,7 @@ const fetchData = async (token: string) => {
   return vocabIdMap;
 };
 
-export const getVocab = async (token: string | undefined) => {
+export const getWanikaniVocab = async (token: string | undefined) => {
   if (token) {
     return fetchData(token);
   } else {
