@@ -47,9 +47,10 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
 };
 
 /**
- * Wanikani has a limit of 64 bytes for the synonym field (see also below).
+ * Wanikani has a limit of 64 bytes for the synonym field documented (see also below).
+ * But since it errored out at exactly 64 bytes, a little safety margin here...
  */
-const MAX_LENGTH = 63;
+const MAX_LENGTH = 61;
 
 /**
  * This function truncates a string to fit the limit if needed.
