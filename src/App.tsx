@@ -112,6 +112,8 @@ function App() {
           one hour. Please do not use Wanikani at the same time. If you navigate
           away from this page, the upload will be stopped. You can resume the
           upload by returning to this page and entering the API token again.
+          <br />
+          <i>Note: This service is provide as-is and without any warranty.</i>
         </p>
       </div>
     </TooltipProvider>

@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { condense, parse } from "./edict2parser";
+import { utfTruncate, condense, parse } from "./edict2parser";
+
+describe("UTF-aware truncation", () => {
+  it("should truncate a string with UTF-8 characters to fit the Wanikani limit", () => {
+    // Ellipsis has three bytes and is replaced by a tilde, making the string fit.
+    const dontTruncate = "Zeichen mit mehreren Bytes (…) in UTF-8 Codierung";
+    const notTruncated = utfTruncate(dontTruncate);
+    expect(notTruncated.endsWith("~")).toBeFalsy();
+
+    // The a character is not replaced, making the string too long.
+    const truncate = "Zeichen mit mehreren Bytes (あ) in UTF-8 Codierung";
+    const truncated = utfTruncate(truncate);
+    expect(truncated.endsWith("~")).toBeTruthy();
+  });
+});
 
 describe("EDICT2 parser", () => {
   it("should parse a standard edict2 line", () => {
@@ -75,6 +89,16 @@ describe("EDICT2 parser", () => {
 
     expect(dictionaryMap.get("陰気")).toEqual(["Trüb sinn", "Düster heit"]);
   });
+
+  it("should match long strings that differ in the end that is truncated", () => {
+    const dictionaryMap = new Map<string, string[]>();
+    const line =
+      "君;きみ [きみ] als Pron. /duPersonalpron. 2. Ps. Sg.; vertraulich; von Männern gegenüber gleichgestellten oder niedriger gestellten Personen verwendet /duPersonalpron. 2. Ps. Sg.; vertraulich; von Männern gegenüber gleichgestellten oder niedriger gestellten Personen verwendetals N. /Herrscher/Souverän/König /Herrscher/Souverän/König/";
+
+    parse(line, dictionaryMap);
+
+    expect(dictionaryMap.get("君")?.length).toEqual(4);
+  });
 });
 
 describe("Synonym condensing", () => {
@@ -95,15 +119,5 @@ describe("Synonym condensing", () => {
 
     expect(condensed.length).toEqual(8);
     expect(condensed).not.toContain("Logik einer Angelegenheit");
-  });
-
-  it("should truncate long synonyms with UTF-8 characters correctly", () => {
-    const meanings = [
-      "Zeichen mit mehreren Bytes (…) in UTF-8 Codierung",
-      "Zeichen mit mehreren Bytes (あ) in UTF-8 Codierung",
-    ];
-    const condensed = condense(meanings);
-    expect(condensed[0].endsWith("~")).toBeFalsy();
-    expect(condensed[1].endsWith("~")).toBeTruthy();
   });
 });

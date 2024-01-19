@@ -20,27 +20,28 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
 
     japaneseWordList.forEach((japaneseWord) => {
       japaneseWord = japaneseWord.replace(/…/, "〜");
+      /*
+        Split up the translations by the "/" and apply numerous fixes.
+        * There are some definitions attached straight to the translations, that do not make a lot of sense to have.
+        * There are whitespaces around translations.
+        * There are alternative UTF-8 whitespaces that we align.
+        * There are too long words that we can't store in Wanikani.
+        * There is one empty word :-/
+      */
       const germanMeanings = germanTranslations
         .split("/")
-        .map((meaning) => meaning.trim().replace(/\p{Zs}/gu, " "));
+        .map((meaning) => meaning.trim().replace(/\p{Zs}/gu, " "))
+        .map(utfTruncate)
+        .filter((meaning) => meaning.length > 0);
 
-      const existingMeanings = dictionary.get(japaneseWord) || [];
       /*
-        In the conversion from JMDict/XML format to EDICT2 format,
-        definitions are attached straight to the translation.
-        This results in a broken text. Also, the meanings that require
-        definitions are usually not the ones we want to include here.
-        So we just discard them.
-      */
-      const filteredMeanings = existingMeanings.filter(
-        (meaning) => !/[a-z][A-Z0-9]/.test(meaning)
-      );
-      /*
+        Merge with existing meanings.
         There are also a couple of double mentions, so let's remove them as well.
         A double mention can also have a different case, but we need to preserve the case.
       */
+      const existingMeanings = dictionary.get(japaneseWord) || [];
       const uniqueMeaningsMap = new Map(
-        [...filteredMeanings, ...germanMeanings].map((meaning) => [
+        [...existingMeanings, ...germanMeanings].map((meaning) => [
           meaning.toLowerCase(),
           meaning,
         ])
@@ -64,7 +65,7 @@ const MAX_LENGTH = 50;
  * We also replace occurrences of the ellipsis character with a tilde since it
  * is three bytes long.
  */
-const utfTruncate = (str: string): string => {
+export const utfTruncate = (str: string): string => {
   let truncated = str.replace(/…/g, "~");
   let wasTruncated = false;
   while (Buffer.byteLength(truncated) > MAX_LENGTH) {
@@ -93,10 +94,7 @@ const MAX_SYNONYMS = 8;
  * for a description of the API limitations for synonyms.
  */
 export const condense = (meanings: string[]) => {
-  return meanings
-    .sort((a, b) => a.length - b.length)
-    .slice(0, MAX_SYNONYMS)
-    .map(utfTruncate);
+  return meanings.sort((a, b) => a.length - b.length).slice(0, MAX_SYNONYMS);
 };
 
 /**
