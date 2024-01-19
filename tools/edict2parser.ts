@@ -22,7 +22,7 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
       japaneseWord = japaneseWord.replace(/…/, "〜");
       const germanMeanings = germanTranslations
         .split("/")
-        .map((meaning) => meaning.trim());
+        .map((meaning) => meaning.trim().replace(/\p{Zs}/gu, " "));
 
       const existingMeanings = dictionary.get(japaneseWord) || [];
       /*

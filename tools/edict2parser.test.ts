@@ -66,6 +66,15 @@ describe("EDICT2 parser", () => {
       "Düsterheit",
     ]);
   });
+
+  it("should match unicode whitespaces and normal whitespaces", () => {
+    const dictionaryMap = new Map<string, string[]>();
+    const line = "陰気 [いんき] /Trüb sinn/Trüb sinn/Düster　heit/Düster heit/";
+
+    parse(line, dictionaryMap);
+
+    expect(dictionaryMap.get("陰気")).toEqual(["Trüb sinn", "Düster heit"]);
+  });
 });
 
 describe("Synonym condensing", () => {
