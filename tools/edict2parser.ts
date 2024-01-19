@@ -37,10 +37,16 @@ export const parse = (line: string, dictionary: Map<string, string[]>) => {
       );
       /*
         There are also a couple of double mentions, so let's remove them as well.
+        A double mention can also have a different case, but we need to preserve the case.
       */
-      const uniqueMeanings = [
-        ...new Set([...filteredMeanings, ...germanMeanings]),
-      ];
+      const uniqueMeaningsMap = new Map(
+        [...filteredMeanings, ...germanMeanings].map((meaning) => [
+          meaning.toLowerCase(),
+          meaning,
+        ])
+      );
+      const uniqueMeanings = Array.from(uniqueMeaningsMap.values());
+
       dictionary.set(japaneseWord, uniqueMeanings);
     });
   }

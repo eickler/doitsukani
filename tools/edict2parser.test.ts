@@ -34,9 +34,9 @@ describe("EDICT2 parser", () => {
     );
   });
 
-  it("should eliminate duplicates in a line", () => {
+  it("should eliminate duplicates in a line regardless of case", () => {
     const dictionaryMap = new Map<string, string[]>();
-    const line = "陰気 [いんき] /Schwermut/Schwermut/";
+    const line = "陰気 [いんき] /schwermut/Schwermut/";
 
     parse(line, dictionaryMap);
 
