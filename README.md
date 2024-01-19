@@ -5,18 +5,19 @@
 
 [Doitsukani](https://eickler.github.io/doitsukani) is a tool to add German translations to the vocabulary of the [Wanikani](https://wanikani.com) Japanese training app. It is based on EDICT2 files from the [Wadoku project](https://www.wadoku.de/wiki/display/WAD/Downloads+und+Links).
 
-<p>
-  <img src="img/durtles.jpg" width="150" style="vertical-align: middle;"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="img/wanikani.png" width="200" style="vertical-align: middle;"/>
-</p>
-
 ## How can I use it?
 
 - Log in to your Wanikani account and create an API token: [https://www.wanikani.com/settings/personal_access_tokens]. Tick the "study_material:create" and "study_materials:update" boxes.
 - Copy the token and paste it into https://eickler.github.io/doitsukani/.
 - Click "Add translations" to add German translations, or "Remove translations" to remove them.
 - Wait ...
+- Check some vocabulary in your favorite Wanikani app.
+
+<p>
+  <img src="img/durtles.jpg" width="150" style="vertical-align: middle;"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="img/wanikani.png" width="200" style="vertical-align: middle;"/>
+</p>
 
 Notes:
 
