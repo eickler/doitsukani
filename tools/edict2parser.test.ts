@@ -90,10 +90,8 @@ describe("Synonym condensing", () => {
 
   it("should truncate long synonyms with UTF-8 characters correctly", () => {
     const meanings = [
-      // This is 62 bytes long, but the three-byte ellipsis is replaced by a tilde and no truncation happens.
-      "Zeichensätze enthalten oft Zeichen mit mehreren Bytes wie… ",
-      // This is 62 bytes and will be truncated to 61 bytes with a tilde.
-      "Zeichensätze enthalten oft Zeichen mit mehreren Bytes wieあ ",
+      "Zeichen mit mehreren Bytes (…) in UTF-8 Codierung",
+      "Zeichen mit mehreren Bytes (あ) in UTF-8 Codierung",
     ];
     const condensed = condense(meanings);
     expect(condensed[0].endsWith("~")).toBeFalsy();
