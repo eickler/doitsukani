@@ -109,7 +109,7 @@ export const getStudyMaterials = async (
   )) as WKStudyMaterial[];
 };
 
-interface WKStudyMaterialCreate {
+export interface WKStudyMaterialCreate {
   subject: number;
   synonyms: string[];
 }
@@ -133,7 +133,7 @@ export const createStudyMaterials = async (
   );
 };
 
-interface WKStudyMaterialUpdate {
+export interface WKStudyMaterialUpdate {
   id: number;
   synonyms: string[];
 }
@@ -152,27 +152,73 @@ export const updateSynonyms = (
   );
 };
 
+export const newMaterialNotIn = (
+  old: WKStudyMaterial,
+  newMaterial: Map<number, WKStudyMaterialCreate>
+) => {
+  const newMaterialData = newMaterial.get(old.data.subject_id);
+  return (
+    newMaterialData &&
+    !newMaterialData.synonyms.every((s) =>
+      old.data.meaning_synonyms.includes(s)
+    )
+  );
+};
+
+export const mergeSynonyms = (master: string[], updated: string[]) => {
+  const result = [...master];
+  for (const synonym of updated) {
+    if (!result.includes(synonym)) {
+      result.push(synonym);
+    }
+  }
+  return result.slice(0, 8);
+};
+
+export const newMaterialWithoutOld = (
+  oldM: WKStudyMaterial[],
+  newM: WKStudyMaterialCreate[]
+): WKStudyMaterialCreate[] => {
+  const oldMap = new Map<number, WKStudyMaterial>();
+  oldM.forEach((m) => oldMap.set(m.data.subject_id, m));
+  return newM.filter((m) => !oldMap.has(m.subject));
+};
+
+export const oldMaterialRequiringUpdate = (
+  oldM: WKStudyMaterial[],
+  newM: WKStudyMaterialCreate[]
+): WKStudyMaterialUpdate[] => {
+  const newMaterialMap = new Map<number, WKStudyMaterialCreate>();
+  newM.forEach((m) => newMaterialMap.set(m.subject, m));
+  return oldM
+    .filter((old) => newMaterialNotIn(old, newMaterialMap))
+    .map((old) => {
+      return {
+        id: old.id,
+        synonyms: mergeSynonyms(
+          old.data.meaning_synonyms,
+          newMaterialMap.get(old.data.subject_id)!.synonyms
+        ),
+      };
+    });
+};
+
+export const delta = (
+  oldM: WKStudyMaterial[],
+  newM: WKStudyMaterialCreate[]
+) => {
+  const toCreate = newMaterialWithoutOld(oldM, newM);
+  const toUpdate = oldMaterialRequiringUpdate(oldM, newM);
+  return { toCreate, toUpdate };
+};
+
 export const writeStudyMaterials = async (
   token: string,
   newMaterial: WKStudyMaterialCreate[],
   setProgress?: SetProgress
 ) => {
   const oldMaterial = await getStudyMaterials(token);
-  const oldMaterialMap = new Map<number, WKStudyMaterial>();
-  oldMaterial.forEach((m) => oldMaterialMap.set(m.data.subject_id, m));
-  const toCreate = newMaterial.filter((m) => !oldMaterialMap.has(m.subject));
-
-  const newMaterialMap = new Map<number, WKStudyMaterialCreate>();
-  newMaterial.forEach((m) => newMaterialMap.set(m.subject, m));
-  const toUpdate = oldMaterial.filter((o) => {
-    const newMaterialData = newMaterialMap.get(o.data.subject_id);
-    if (newMaterialData) {
-      return (
-        JSON.stringify(o.data.meaning_synonyms.sort()) !==
-        JSON.stringify(newMaterialData.synonyms.sort())
-      );
-    }
-  });
+  const { toCreate, toUpdate } = delta(oldMaterial, newMaterial);
 
   let step = 0;
   const totalSteps = toCreate.length + toUpdate.length;
@@ -191,23 +237,12 @@ export const writeStudyMaterials = async (
   }
 
   for (const material of toUpdate) {
-    const newMaterialData = newMaterialMap.get(material.data.subject_id);
-    if (newMaterialData) {
-      await updateSynonyms(token, limiter, {
-        id: material.id,
-        synonyms: [
-          ...new Set([
-            ...material.data.meaning_synonyms,
-            ...newMaterialData.synonyms,
-          ]),
-        ],
-      });
-      setProgress?.({
-        text: etaText,
-        currentStep: ++step,
-        lastStep: totalSteps,
-      });
-    }
+    await updateSynonyms(token, limiter, material);
+    setProgress?.({
+      text: etaText,
+      currentStep: ++step,
+      lastStep: totalSteps,
+    });
   }
 };
 

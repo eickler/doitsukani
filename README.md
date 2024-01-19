@@ -27,3 +27,4 @@ Limitations:
 
 - There are about 100 vocabulary items that do not have a counterpart in Wadoku.
 - Wadoku has a LOT of alternative translations for many words. To not add tens of synonyms, I am using a small heuristic to add up to eight translations as they are.
+- The tool currently cannot distinguish between synonyms that were added by the user and synonyms that were added by the app but have been fixed meanwhile. However, I would not like to overwrite synonyms of the user.
