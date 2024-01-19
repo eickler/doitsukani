@@ -1,4 +1,7 @@
-# <img src="src/assets/doitsukani.png" width="54" height="56"/> Doitsukani ドイツ蟹
+
+# <img src="public/doitsukani.webp" width="54" height="56"/> Doitsukani ドイツ蟹
+
+![Deployment](https://github.com/eickler/doitsukani/actions/workflows/web.yml/badge.svg)
 
 [Doitsukani](https://eickler.github.io/doitsukani) is a tool to add German translations to the vocabulary of the [Wanikani](https://wanikani.com) Japanese training app. It is based on EDICT2 files from the [Wadoku project](https://www.wadoku.de/wiki/display/WAD/Downloads+und+Links).
 
