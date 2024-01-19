@@ -25,8 +25,6 @@ Notes:
 - The update can take more than one hour if you have not burned anything yet. This is because Wanikani only permits one update per second roughly.
 - If you close the browser during the update, the application will simply stop. If you want to continue, just run it again. The application will resume from where it left off.
 
-After everything completed, you should see German translations as "user synonyms" in your Wanikani app as shown in the screenshots.
-
 Limitations:
 
 - There are about 100 vocabulary items that do not have a counterpart in Wadoku.
