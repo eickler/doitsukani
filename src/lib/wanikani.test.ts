@@ -85,15 +85,25 @@ describe("Material synchronsation", () => {
     expect(toUpdate.length).toEqual(0);
   });
 
-  it("should update existing materials", () => {
-    const oldM = [createMaterial(1, ["1", "2"])];
-    const newM = [{ subject: 1, synonyms: ["2", "3"] }];
+  it("should determine material to update ignoring case", () => {
+    const oldM = [createMaterial(1, ["a"])];
+    const newM = [{ subject: 1, synonyms: ["A"] }];
 
     const toUpdate = oldMaterialRequiringUpdate(oldM, newM);
 
+    expect(toUpdate.length).toEqual(0);
+  });
+
+  it("should update existing materials ignoring case", () => {
+    const oldM = [createMaterial(1, ["a", "B"])];
+    const newM = [{ subject: 1, synonyms: ["b", "c"] }];
+
+    const toUpdate = oldMaterialRequiringUpdate(oldM, newM);
+
+    console.log(toUpdate);
     expect(toUpdate.length).toEqual(1);
     expect(toUpdate[0].id).toEqual(4711); // 4711 is the dummy ID from createMaterial
-    expect(toUpdate[0].synonyms).toEqual(["1", "2", "3"]);
+    expect(toUpdate[0].synonyms).toEqual(["a", "b", "c"]);
   });
 
   it("should calulate delta", () => {

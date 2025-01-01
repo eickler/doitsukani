@@ -157,18 +157,22 @@ export const newMaterialNotIn = (
   newMaterial: Map<number, WKStudyMaterialCreate>
 ) => {
   const newMaterialData = newMaterial.get(old.data.subject_id);
-  return (
-    newMaterialData &&
-    !newMaterialData.synonyms.every((s) =>
-      old.data.meaning_synonyms.includes(s)
-    )
+  if (!newMaterialData) {
+    return false;
+  }
+
+  const oldSynonymsLower = old.data.meaning_synonyms.map((s) =>
+    s.toLowerCase()
+  );
+  return !newMaterialData.synonyms.every((s) =>
+    oldSynonymsLower.includes(s.toLowerCase())
   );
 };
 
 export const mergeSynonyms = (master: string[], updated: string[]) => {
-  const result = [...master];
+  const result = [...master].map((synonym) => synonym.toLowerCase());
   for (const synonym of updated) {
-    if (!result.includes(synonym)) {
+    if (!result.includes(synonym.toLowerCase())) {
       result.push(synonym);
     }
   }
